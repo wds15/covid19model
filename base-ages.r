@@ -8,8 +8,6 @@ args <- list(
   stanModelFile= 'base_age_google_mobility_200427',
   seed= 42,
   chain= 1,
-  indir= '~/git/covid19model',
-  outdir= '~/sandbox/covid19model-2.0/results',
   job_tag= 'myfirstrun',
   cntct_by = 5,
   seedAge = 7L
@@ -33,8 +31,8 @@ cat(sprintf("Running\n"))
 str(args)
 set.seed(args$seed)
 
-source(file.path(args$indir, "utils", "read-data.r"))
-source(file.path(args$indir, "utils", "process-covariates.r"))
+source(file.path("utils", "read-data.r"))
+source(file.path("utils", "process-covariates.r"))
 
 ## make job dir
 dir.create( args$job_dir )

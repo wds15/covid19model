@@ -3,8 +3,6 @@ library(data.table)
 library(gdata)
 library(EnvStats)
 
-setwd("~/git/covid19model")
-
 ## command line parsing if any
 args <- list(
   stanModelFile= 'base_age_google_mobility_200427',
@@ -12,23 +10,23 @@ args <- list(
   chain= 1,
   indir= '~/git/covid19model',
   outdir= '~/sandbox/covid19model-2.0/results',
-  job_tag= '14countries',
+  job_tag= 'myfirstrun',
   cntct_by = 5,
   seedAge = 7L
 )
 
 ## set other args
-args$file_stanModel <- file.path(args$indir,'stan-models',paste0(args$stanModelFile,'.stan'))
-args$file_serial_interval <- file.path(args$indir,'data','serial_interval.csv')
-args$file_covariates <- file.path(args$indir,'data','interventions.csv')
-args$file_contact <- file.path(args$indir,'data','contact_UK.rda') # with weekday weekend
-args$file_pop_age <- file.path(args$indir,'data','popByAge.csv')
-args$file_age_ifr <- file.path(args$indir,'data','ifr_age.csv')
-args$file_google_mobility <- file.path(args$indir,'data','google-mobility.csv')
+args$file_stanModel <- file.path('stan-models',paste0(args$stanModelFile,'.stan'))
+args$file_serial_interval <- file.path('data','serial_interval.csv')
+args$file_covariates <- file.path('data','interventions.csv')
+args$file_contact <- file.path('data','contact_UK.rda') # with weekday weekend
+args$file_pop_age <- file.path('data','popByAge.csv')
+args$file_age_ifr <- file.path('data','ifr_age.csv')
+args$file_google_mobility <- file.path('data','google-mobility.csv')
 tmp <- Sys.getenv("PBS_JOBID")
 args$job_id <- ifelse(tmp!='', tmp, as.character(abs(round(rnorm(1) * 1e6))) )
-args$job_dir <- file.path(args$outdir,paste0(args$stanModelFile,'-',args$job_tag,'-',args$job_id)) 
-args$DEBUG <- FALSE
+args$job_dir <- file.path("results",paste0(args$stanModelFile,'-',args$job_tag,'-',args$job_id)) 
+args$DEBUG <- TRUE
 
 ## start script
 cat(sprintf("Running\n"))
@@ -101,7 +99,7 @@ rstan_options(auto_write = TRUE)
 model <- stan_model(args$file_stanModel)
 
 if(args$DEBUG) {
-  fit <- sampling(model,data=stan_data,iter=10,warmup=5,chains=1,seed=args$seed,verbose=TRUE)
+  fit <- sampling(model,data=stan_data,iter=100,warmup=50,chains=1,seed=args$seed,verbose=TRUE)
 } else { 
   # uncomment the line below for a full run to replicate results and comment the second line below 
   fit <- sampling(model,data=stan_data,iter=3000, warmup=2000, chains=1,seed=args$seed, thin=1, control = list(adapt_delta = 0.95, max_treedepth = 15))

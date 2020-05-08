@@ -3,6 +3,8 @@ library(data.table)
 library(gdata)
 library(EnvStats)
 
+setwd("~/git/covid19model")
+
 ## command line parsing if any
 args <- list(
   stanModelFile= 'base_age_google_mobility_200427',
@@ -25,6 +27,7 @@ tmp <- Sys.getenv("PBS_JOBID")
 args$job_id <- ifelse(tmp!='', tmp, as.character(abs(round(rnorm(1) * 1e6))) )
 args$job_dir <- file.path("results",paste0(args$stanModelFile,'-',args$job_tag,'-',args$job_id)) 
 args$DEBUG <- TRUE
+args$path_to_cmdstan <- filepath("~/git/cmdstan")
 
 ## start script
 cat(sprintf("Running\n"))
@@ -96,12 +99,25 @@ options(mc.cores = parallel::detectCores())
 rstan_options(auto_write = TRUE)
 model <- stan_model(args$file_stanModel)
 
-if(args$DEBUG) {
-  fit <- sampling(model,data=stan_data,iter=100,warmup=50,chains=1,seed=args$seed,verbose=TRUE)
-} else { 
-  # uncomment the line below for a full run to replicate results and comment the second line below 
-  fit <- sampling(model,data=stan_data,iter=3000, warmup=2000, chains=1,seed=args$seed, thin=1, control = list(adapt_delta = 0.95, max_treedepth = 15))
-  #fit = sampling(model,data=stan_data,iter=10,warmup=5,chains=1,seed=args$seed,thin=1,control = list(adapt_delta = 0.95, max_treedepth = 10))
-}  
+if(rstan){
+  if(args$DEBUG) {
+    fit <- sampling(model,data=stan_data,iter=10,warmup=5,chains=1,seed=args$seed,verbose=TRUE)
+  } else { 
+    # uncomment the line below for a full run to replicate results and comment the second line below 
+    fit <- sampling(model,data=stan_data,iter=3000, warmup=2000, chains=1,seed=args$seed, thin=1, control = list(adapt_delta = 0.95, max_treedepth = 15))
+    #fit = sampling(model,data=stan_data,iter=10,warmup=5,chains=1,seed=args$seed,thin=1,control = list(adapt_delta = 0.95, max_treedepth = 10))
+  }
+}
+if(cmdstan){
+  set_cmdstan_path(args$path_to_cmdstan)
+  
+  if(args$DEBUG) {
+    fit <- sampling(model,data=stan_data,iter=10,warmup=5,chains=1,seed=args$seed,verbose=TRUE)
+  } else { 
+    # uncomment the line below for a full run to replicate results and comment the second line below 
+    fit <- sampling(model,data=stan_data,iter=3000, warmup=2000, chains=1,seed=args$seed, thin=1, control = list(adapt_delta = 0.95, max_treedepth = 15))
+    #fit = sampling(model,data=stan_data,iter=10,warmup=5,chains=1,seed=args$seed,thin=1,control = list(adapt_delta = 0.95, max_treedepth = 10))
+  }
+}
 
 save(fit, file=file.path(args$job_dir, paste0(basename(args$job_dir), '_stanout.RData')) )

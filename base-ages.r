@@ -93,6 +93,12 @@ reported_cases = processed_data$reported_cases
 ## save image before running Stan
 save.image( file=file.path(args$job_dir, paste0(basename(args$job_dir), '_stanin.RData')) )
 
+# adapt format for cmdstan
+stan_data$covariates_res = array(as.numeric(unlist(stan_data$covariates_res)), dim=c(stan_data$M, stan_data$N2, stan_data$P_RES))
+stan_data$covariates_nonres = array(as.numeric(unlist(stan_data$covariates_nonres)), dim=c(stan_data$M, stan_data$N2, stan_data$P_NONRES))
+stan_data$cntct_weekdays_mean = array(as.numeric(unlist(stan_data$cntct_weekdays_mean)), dim=c(stan_data$M, stan_data$A, stan_data$A))
+stan_data$cntct_weekends_mean = array(as.numeric(unlist(stan_data$cntct_weekdays_mean)), dim=c(stan_data$M, stan_data$A, stan_data$A))
+
 ## run Stan
 cat('\nRunning Stan... \n')
 options(mc.cores = parallel::detectCores())

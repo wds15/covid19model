@@ -36,11 +36,13 @@ functions {
     
     // probability of infection given contact in location m
     real rho0 = R0_local / avg_cntct_local;
-    
+    real log_rho0 = log(rho0);
+    real zero = 0.0;
+
     // expected deaths by calendar day (1st dim) age (2nd dim) and country (3rd dim), under self-renewal model
     // and expected deaths by calendar day (rows) and country (cols), under self-renewal model
     //matrix<lower=0>[N2,A] E_deathsByAge[M];
-    matrix[N2,A] E_deathsByAge = rep_matrix(0., N2, A);
+    matrix[N2,A] E_deathsByAge = rep_matrix(zero, N2, A);
     vector[N2] E_deaths;
   
     // expected new cases by calendar day, age, and location under self-renewal model
@@ -55,16 +57,23 @@ functions {
     // define multipliers for non-residential contacts in each location for both weekdays and weekends
     // multiply the multipliers with rho0 in each location
     // TODO use https://mc-stan.org/docs/2_18/stan-users-guide/QR-reparameterization-section.html
+    /*
     impact_intv_res = exp( covariates_res_local * beta_res_wkday );
     impact_intv_nonres = exp( covariates_nonres_local * beta_nonres_wkday );
     impact_intv_res[ wkend_idx_local ] = exp( covariates_res_local[ wkend_idx_local, :] * beta_res_wkend );
-    impact_intv_nonres[ wkend_idx_local ] = rep_vector(0., num_wkend_idx_local );
+    impact_intv_nonres[ wkend_idx_local ] = rep_vector(zero, num_wkend_idx_local );
     impact_intv_res *= rho0;
     impact_intv_nonres *= rho0;
+    */
+
+    impact_intv_res = exp( log_rho0 + covariates_res_local * beta_res_wkday );
+    impact_intv_nonres = exp( log_rho0 + covariates_nonres_local * beta_nonres_wkday );
+    impact_intv_res[ wkend_idx_local ] = exp( log_rho0 + covariates_res_local[ wkend_idx_local, :] * beta_res_wkend );
+    impact_intv_nonres[ wkend_idx_local ] = rep_vector(zero, num_wkend_idx_local );
     
     // init expected cases by age and location
     // init expected cases by age and location in first N0 days
-    E_casesByAge = rep_matrix( 0., N2, A );
+    E_casesByAge = rep_matrix( zero, N2, A );
     E_casesByAge[1:N0,init_A] = rep_vector( e_cases_N0_local, N0 );
   
     // calculate expected cases by age and country under self-renewal model after first N0 days
@@ -205,8 +214,6 @@ transformed data {
     avg_cntct[m] = popByAge[:,m]' * ( cntct_weekdays_mean[m] * ones_vector_A ) * 5./7.;
     avg_cntct[m] += popByAge[:,m]' * ( cntct_weekends_mean[m] * ones_vector_A ) * 2./7.;
   }
-
-  print("ones_vector_A = ", ones_vector_A);
 }
 
 parameters {

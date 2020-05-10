@@ -36,6 +36,7 @@ functions {
     
     // probability of infection given contact in location m
     real rho0 = R0_local / avg_cntct_local;
+    real log_rho0 = log(rho0);
     real zero = 0.0;
     
     // expected deaths by calendar day (1st dim) age (2nd dim) and country (3rd dim), under self-renewal model
@@ -55,14 +56,22 @@ functions {
     // define multipliers for residential contacts in each location for both weekdays and weekends
     // define multipliers for non-residential contacts in each location for both weekdays and weekends
     // multiply the multipliers with rho0 in each location
-    // TODO use https://mc-stan.org/docs/2_18/stan-users-guide/QR-reparameterization-section.html
+    // TODO use
+    // https://mc-stan.org/docs/2_18/stan-users-guide/QR-reparameterization-section.html
+    /*
     impact_intv_res = exp( covariates_res_local * beta_res_wkday );
     impact_intv_nonres = exp( covariates_nonres_local * beta_nonres_wkday );
     impact_intv_res[ wkend_idx_local ] = exp( covariates_res_local[ wkend_idx_local, :] * beta_res_wkend );
     impact_intv_nonres[ wkend_idx_local ] = rep_vector(zero, num_wkend_idx_local );
     impact_intv_res *= rho0;
     impact_intv_nonres *= rho0;
-    
+    */
+
+    impact_intv_res = exp( log_rho0 + covariates_res_local * beta_res_wkday );
+    impact_intv_nonres = exp( log_rho0 + covariates_nonres_local * beta_nonres_wkday );
+    impact_intv_res[ wkend_idx_local ] = exp( log_rho0 + covariates_res_local[ wkend_idx_local, :] * beta_res_wkend );
+    impact_intv_nonres[ wkend_idx_local ] = rep_vector(zero, num_wkend_idx_local );
+
     // init expected cases by age and location in first N0 days
     E_casesByAge[1:N0,init_A] = rep_vector( e_cases_N0_local, N0 );
   

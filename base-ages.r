@@ -184,7 +184,7 @@ new3rs_lp
 
 ref_lp - new3rs_lp
 
-## great, lp matches!!
+## great, lp matches up to 1E-11 (due to the log_rho0 change this is now different from 0)
 
 options(cmdstan_home="~/work/cmdstan-2.23.0")
 
@@ -203,12 +203,12 @@ post_v3rs <- cmdstan("stan-models/base_age_google_mobility_200427-v3-rs.stan",
 
 args(cmdstan)
 
-## run with 4 threads
-Sys.setenv(STAN_NUM_THREADS=4)
-post_v3rs <- cmdstan("stan-models/base_age_google_mobility_200427-v3-rs.stan",
-                     num_warmup=50,
+## run with 3 threads
+Sys.setenv(STAN_NUM_THREADS=3)
+elapsed <- system.time(post_v3rs <- cmdstan("stan-models/base_age_google_mobility_200427-v3-rs.stan",
+                     num_warmup=25,
                      save_warmup=1,
-                     num_samples=50,
+                     num_samples=25,
                      adapt_delta=0.95,
                      init=0.25,
                      data=stan_data,
@@ -216,7 +216,31 @@ post_v3rs <- cmdstan("stan-models/base_age_google_mobility_200427-v3-rs.stan",
                      cores=1,
                      chains=1,
                      refresh=1
-                     )
+                     ))
+
+elapsed
+
+elapsed
+
+elapsed_old  <- elapsed
+
+Sys.setenv(STAN_NUM_THREADS=1)
+elapsed_cpu1 <- system.time(post_v3rs <- cmdstan("stan-models/base_age_google_mobility_200427-v3-rs.stan",
+                     num_warmup=25,
+                     save_warmup=1,
+                     num_samples=25,
+                     adapt_delta=0.95,
+                     init=0.25,
+                     data=stan_data,
+                     seed=args$seed,
+                     cores=1,
+                     chains=1,
+                     refresh=1
+                     ))
+
+elapsed_cpu1
+
+elapsed_cpu1 / elapsed
 
 
 if(rstan){

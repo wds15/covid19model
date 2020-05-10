@@ -203,7 +203,7 @@ post_v3rs <- cmdstan("stan-models/base_age_google_mobility_200427-v3-rs.stan",
 
 args(cmdstan)
 
-## run with 3 threads
+## run with 4 threads
 Sys.setenv(STAN_NUM_THREADS=4)
 post_v3rs <- cmdstan("stan-models/base_age_google_mobility_200427-v3-rs.stan",
                      num_warmup=50,

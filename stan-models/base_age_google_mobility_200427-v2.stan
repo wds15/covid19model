@@ -62,13 +62,14 @@ transformed parameters {
   
   // expected deaths by calendar day (1st dim) age (2nd dim) and country (3rd dim), under self-renewal model
   // and expected deaths by calendar day (rows) and country (cols), under self-renewal model
-  matrix<lower=0>[N2,A] E_deathsByAge[M];
-  matrix<lower=0>[N2,M] E_deaths= rep_matrix(0., N2, M);
+  //matrix<lower=0>[N2,A] E_deathsByAge[M];
+  matrix<lower=0>[N2,A] E_deathsByAge[M] = rep_array(rep_matrix(0., N2, A), M);
+  //matrix<lower=0>[N2,M] E_deaths= rep_matrix(0., N2, M);
+  matrix<lower=0>[N2,M] E_deaths;
   
   // expected new cases by calendar day, age, and location under self-renewal model
   // and a container to store the precomputed cases by age
   matrix<lower=0>[N2,A] E_casesByAge[M];
-  row_vector<lower=0>[A] tmp_row_vector_A;
   
   // scaling of contacts after intervention effect on day t in location m
   matrix<lower=0>[N2, M] impact_intv_nonres;
@@ -101,11 +102,17 @@ transformed parameters {
   
   // calculate expected cases by age and country under self-renewal model after first N0 days
   // and adjusted for saturation
-    for (m in 1:M)
+  for (m in 1:M)
   {
     for (t in (N0+1):N2)
     {
-      tmp_row_vector_A = rev_serial_interval[max(1,(SI_CUT-t+2)):SI_CUT] * E_casesByAge[m][max(1,(t-SI_CUT)):(t-1),:];
+      int start_idx_rev_serial = SI_CUT-t+2 > 1 ? SI_CUT-t+2 : 1;
+      int start_idx_E_casesByAge = t-SI_CUT > 1 ? t-SI_CUT : 1;
+      row_vector[A] tmp_row_vector_A = rev_serial_interval[start_idx_rev_serial:SI_CUT] * E_casesByAge[m][start_idx_E_casesByAge:(t-1),:];
+      //tmp_row_vector_A = rev_serial_interval[max(1,(SI_CUT-t+2)):SI_CUT] * E_casesByAge[m][max(1,(t-SI_CUT)):(t-1),:];
+      //E_casesByAge[m][t,:] = tmp_row_vector_A * (
+      //impact_intv_res[t,m] * cntct_weekends_mean[m] +
+      //impact_intv_nonres[t,m] * cntct_weekdays_mean[m] );
       E_casesByAge[m][t,:] = tmp_row_vector_A * ( impact_intv_res[t,m] * cntct_weekends_mean[m] + impact_intv_nonres[t,m] * cntct_weekdays_mean[m] );
     }
   }
@@ -113,7 +120,7 @@ transformed parameters {
   // calculate expected deaths by age and country  
   for (m in 1:M)
   {
-    E_deathsByAge[m] = rep_matrix( 0., N2, A );
+    //E_deathsByAge[m] = rep_matrix( 0., N2, A );
     E_deathsByAge[m][1,:] = 1e-15 * E_casesByAge[m][1,:];
     for (t in 2:N2)
     {
@@ -144,10 +151,7 @@ model {
   
   // likelihood
   for(m in 1:M){
-    //deaths[epidemicStart[m]:N[m], m] ~
-    //neg_binomial_2(E_deaths[epidemicStart[m]:N[m], m], phi);
-    // changed to normalized pmf which has to be used with reduce_sum
-    target += neg_binomial_2_lpmf(deaths[epidemicStart[m]:N[m], m]| E_deaths[epidemicStart[m]:N[m], m], phi);
+    deaths[epidemicStart[m]:N[m], m] ~ neg_binomial_2(E_deaths[epidemicStart[m]:N[m], m], phi);
   }
 }
 

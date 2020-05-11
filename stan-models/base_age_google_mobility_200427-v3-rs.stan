@@ -93,7 +93,13 @@ functions {
       }
       {
         row_vector[A] tmp_row_vector_A = rev_serial_interval[start_idx_rev_serial:SI_CUT] * E_casesByAge[start_idx_E_casesByAge:(t-1)];
-        E_casesByAge[t] = tmp_row_vector_A * ( impact_intv_res[t] * cntct_weekends_mean_local + impact_intv_nonres[t] * cntct_weekdays_mean_local );
+        //E_casesByAge[t] = tmp_row_vector_A * ( impact_intv_res[t] *
+        //cntct_weekends_mean_local + impact_intv_nonres[t] *
+        //cntct_weekdays_mean_local );
+        // better version which does the reduction first (row-vector x
+        //matrix) and then adds the scaled results
+        E_casesByAge[t] = impact_intv_res[t]    * (tmp_row_vector_A * cntct_weekends_mean_local) +
+                          impact_intv_nonres[t] * (tmp_row_vector_A * cntct_weekdays_mean_local);
       }
     }
   

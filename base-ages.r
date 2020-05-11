@@ -221,6 +221,7 @@ elapsed <- system.time(post_v3rs <- cmdstan("stan-models/base_age_google_mobilit
 elapsed
 
 elapsed
+elapsed_old
 
 elapsed_old  <- elapsed
 
